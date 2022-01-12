@@ -72,3 +72,7 @@ git add : staging area에 추가하는 명령어
 git add 파일이름.확장자
 git add 폴더/
 git add . : 현재 디렉토리에 속한 모든 파일/폴더 추가
+
+git commit : staging area에 올라온 파일들의 변경 사항을 하나의 버전으로 저장하는 명령어
+커밋 메세지는 현재 변경사항을 기록하는 용도
+git commit -m "커밋 메세지"
