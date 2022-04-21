@@ -1,5 +1,13 @@
 # REST API
 
+> #### 알면 좋은 꿀팁
+>
+> serializer 정의할 때 depth 옵션을 정해주면 참조하는 대상에서 참조되는 대상의 정보를 볼 수 있다.
+>
+> 참조되는 대상 = nested relationships
+>
+> 참조하는 대상 = depth
+
 ## HTTP (HyperText Transfer Protocol)
 
 - 웹에서 이루어지는 모든 데이터 교환의 기초
@@ -395,4 +403,32 @@ def comment_create(request, article_pk):
 >         model = Article
 >         fields = '__all__'
 > ```
+
+
+
+## Django-seed
+
+### 설치
+
+```shell
+$ pip install django-seed
+```
+
+```python
+#settings.py
+INSTALLED_APPS = [
+    'articles',
+    'rest_framework',
+    'django_seed',
+    ~~
+]
+```
+
+### 실행
+
+```shell
+$ python manage.py seed AppName --number=20
+ex) $ python manage.py seed articles --number=20
+#20개 생성
+```
 
