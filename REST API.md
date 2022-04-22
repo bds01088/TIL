@@ -432,3 +432,252 @@ ex) $ python manage.py seed articles --number=20
 #20개 생성
 ```
 
+
+
+## M:N 
+
+```python
+#models.py
+class Card(models.Model):
+    articles = models.ManyToManyField(Article, related_name='cards')
+    name = models.CharField(max_length=100)
+    
+#######################################################################
+#serializer의 세분화를 위해 폴더로 만들고 articles, comments, cards를 따로 만들어준다
+#serializer.card.py
+from ..models import Card
+from rest_framework import serializers
+
+class CardSerializer(serializers.ModelSerializer):
+    class Meta :
+        model = Card
+        fields = '__all__'
+        
+#########################################################
+#article에서도 card에 대한 정보를 보고 싶다면
+class ArticleSerializer(serializers.ModelSerializer):
+	comment_set = CommentSerializer(many=True, read_only=True)
+	comment_count = serializers.IntegerField(source='comment_set.count', read_only=True)
+    #다만 참조하는 cardserializer가 모든 필드를 표시한다.
+    cards = CardSerializer(many=True, read_only=True)
+class Meta:
+     model = Article
+     fields = '__all__'
+```
+
+
+
+## Swagger
+
+### drf-yasg 라이브러리
+
+```shell
+$pip install drf-yasg
+```
+
+```python
+#settings.py
+INSTALLED_APPS = [
+    ~~
+    'jango.contrib.staticfiels',
+    'drf_yasg',
+]
+
+#urls.py
+from drf_yasg.views import get_schema_view
+from rest_framework import permissions
+from drf_yasg import openapi
+
+schema_view = get_schema_view(
+   openapi.Info(
+      title="Snippets API",
+      default_version='v1',
+      description="Test description",
+      terms_of_service="https://www.google.com/policies/terms/",
+      contact=openapi.Contact(email="contact@snippets.local"),
+      license=openapi.License(name="BSD License"),
+   ),
+   public=True,
+   permission_classes=[permissions.AllowAny],
+)
+
+urlpatterns = [
+    ~~~
+    ~~~~
+    ~~~
+    #정규표현식이 아닌 주소
+    #path('swagger/', schema_view.with_ui('swagger')),
+    re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+   re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+   re_path(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+   ...
+]
+```
+
+
+
+## Fixtures
+
+> 앱을 처음 설정할 때 미리 준비된 데이터로 데이터베이스를 미리 채우는 것
+>
+> 원격저장소에는 DB를 올리지않기 때문에 fixtures를 올려 기초 데이터를 공유할 수 있다
+
+- 데이터베이스의 serialized 된 내용을 포함하는 파일 모음
+- django가 fixtures파일을 찾는 경로
+  - app/fixtures/
+
+### DumpData
+
+> ```shell
+> $python manage.py dumpdata [app_label[.ModelName]]
+> ```
+>
+> ```shell
+> #--indent 옵션을 주지 않으면 한 줄로 작성됨
+> #"auth앱의 user모델 데이터를 indent 4칸(tab)의 user.json 파일로 출력"
+> $python manage.py dumpdata --indent 4 auth.user > user.json
+> $python manage.py dumpdata --indent 4 articles.article > article.json
+> $python manage.py dumpdata --indent 4 articles.comment > comments.json
+> $python manage.py dumpdata --indent 4 accounts.user > users.json
+> ```
+
+
+
+### LoadData
+
+Fixture의 내용을 검색하여 데이터베이스에 로드
+
+> ```shell
+> $python manange.py loaddata articles.json comments.json users.json
+> ```
+
+- templates와 마찬가지로 설정할 수 있다
+  - 2중 폴더를 통해 json의 이름이 같은 파일들을 다루기 위해
+  - accounts/fixtures/accounts/user.json 같은 느낌으로 사용하자
+
+#### 주의사항
+
+fixtures는 직접 생성하는 것이 아닌 dumpdata로 생성하는 것임
+
+직접 json만들면 에러가 생길 수 도 있음
+
+
+
+## Improve Query
+
+### QuerySets are lazy
+
+- 쿼리셋은 게으르다
+- Django는 쿼리셋이 '평가(evaluated)' 될 때까지 실제로 쿼리를 실행하지 않음
+- DB에 쿼리를 전달하는 일이 웹 애플리케이션을 느려지게 하는 주범 중 하나이기 때문
+
+### 평가(evaluated)
+
+- 쿼리셋에 해당하는 DB의 레코드들을 실제로 가져오는 것
+  - == hit, access, Queries database
+- 평가된 모델들은 쿼리셋의 내장 캐시에 저장되며,
+  덕분에 우리가 쿼리셋을 다시 순회하더라도 똑같은 쿼리를 DB에 다시 전달하지 않음
+
+#### 캐시 (cache)
+
+- 데이터나 값을 미리 복사해 놓는 임시 장소
+- 캐시에 데이터를 미리 복사해놓으면 계산이나 접근시간 없이 빠르게 데이터에 접근 가능
+
+#### 쿼리셋이 평가되는 시점
+
+1. Iteration
+   - QuerySet은 반복 가능하며 처음 반복할 때 데이터베이스 쿼리를 실행
+   - 매 반복마다 쿼리를 실행하면 느려지기 때문에
+   - 평가는 한번만 이루어지며 그 뒤에는 캐시에 저장된 것을 가져와서 반복함
+2. bool()
+   - bool 컨텍스트에서 QuerySet을 테스트하면 쿼리가 실행
+
+#### 캐시와 쿼리셋
+
+- 각 쿼리셋에는 데이터베이스 액세스를 최소화하는 '캐시'가 포함되어있음
+  1. 새로운 쿼리셋이 만들어지면 캐시는 비어있음
+  2. 쿼리셋이 처음으로 평가되면 데이터베이스 쿼리가 발생
+
+> 쿼리셋이 캐시되지 않는 경우
+>
+> 1. 쿼리셋 객체에서 `특정 인덱스`를 반복적으로 가져오면 매번 쿼리 평가함
+>
+>    ```python
+>    queryset = Article.objects.all()
+>    print(queryset[5])
+>    print(queryset[5])
+>    ```
+>
+> 2. 그러나 쿼리 셋 전체가 이미 평가된 경우 캐시에서 확인할 수 있다
+>
+>    ```python
+>    [article for article in queryset]
+>    print(queryset[5])
+>    print(queryset[5])
+>    ```
+
+
+
+### 필요하지 않는 것을 검색하지 않기
+
+- .count()
+  - 카운트만 원하는 경우
+  - len(queryset) 대신 QuerySet.count() 사용하기
+- .exists()
+  - 값이 존재하는지 확인할 경우
+  - if queryset 대신 QuerySet.exist() 사용
+- 다만 항상 붙인다고 해서 최적화가 이루어지는 것은 아니므로
+  최적화는 상황에 맞게 사용해야한다.
+
+- Annotate를 자주 써서 쿼리 평가하는 것을 최소화하자
+
+
+
+### Annotate
+
+> 한번에 모든 것을 검색하기
+
+1. select_related()
+   - 1:1 또는 1:N 참조 관계에서 사용
+   - DB에서 INNER JOIN활용
+2. prefetch_related()
+   - M:N 또는 1:N 역참조 관계에서 사용
+   - DB가아닌 Python을 통한 JOIN
+
+#### select_related()
+
+- foreign key & one-to-one 관계에서만 사용 가능
+
+  - 게시글의 작성자 가져오기
+
+    - ```python
+      articles = Article.objects.select_related('user')
+      ```
+
+#### prefetch_related()
+
+- M:N & 1:N 역참조 관계에 사용 가능
+
+  - 댓글 목록을 모두 출력하기
+
+    - ```python
+      articles = Article.objects.prefetch_related('comment_set')
+      ```
+
+#### 복합 활용
+
+- 댓글에 더해서 해당 댓글을 작성한 사용자 이름까지 출력 해보기
+
+  - ```django
+    {% for comment in article.comment_set.all %}
+    	<p>{{comment.user.username}} : {{comment.content}}</p>
+    {% endfor %}
+    ```
+
+  - ```python
+    from django.db.models import Prefetch
+    
+    articles = Article.objects.prefetch.related(
+        Prefetch('comment_set', queryset=Comment.objects.select_related('user'))
+    )
+    ```
