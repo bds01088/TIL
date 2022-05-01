@@ -729,7 +729,7 @@ _.range()
 > 
 > const onColorInput = function (event){
 >     const userInput = event.target.value
-> 	const h2Tage = document.querySelector('h2')
+>  const h2Tage = document.querySelector('h2')
 >     h2Tage.style.color = userInput
 > }
 > colorInput.addEventListener('input', onColorInput)
@@ -758,6 +758,12 @@ _.range()
 - event의 속성에서 cancelable 값이 True인 경우에만 기본 내장 event취소가 가능하다
 - scroll 같은 경우에는 cancelable 값이 false이므로 event.preventDefault를 설정해주어도 취소 불가능 하다
 
-#### Event 리셋
+### Event 리셋
 
 > event.target.reset()
+
+### EventBubbling
+
+> 하위요소에서 발생한 이벤트가 상위요소까지 전파되는 것
+
+- 버블링을 막기 위해서 event.stopPropagation() 사용
