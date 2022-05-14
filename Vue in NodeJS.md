@@ -201,9 +201,89 @@ export default {
 
 ### Props
 
+- 부모(상위) 컴포넌트의 정보를 전달받기 위한 사용자 지정 특성
+- 자식(하위) 컴포넌트는 props 옵션을 명시적으로 선언해야 함
+
+1. 부모 컴포넌트에서 자식 컴포넌트를 import해온다.
+
+2. 부모 컴포넌트의 templates에 자식 컴포넌트를 사용한다
+
+3. templates에 사용된 자식 컴포넌트에게 바인딩된 데이터를 내려준다.
+
+   ```vue
+   <the-About 
+         :my-message="parentData" 
+   </the-About>
+   ```
+
+4. 자식 컴포넌트에서 props를 정의하고 내려주는 데이터이름과 속성을 적는다
+
+   ```vue
+   name : 'child',
+   props : {
+   	myMessage : String
+   }
+   ```
+
+5. {{}}로 자식 컴포넌트의 템플릿에 사용한다
+
+
+
 ### Emit Events
 
+- Listening to Child Components Events
+- $emit(eventName)
+  - 현재 인스턴스에서 이벤트를 트리거
+  - 추가 인자는 리스너의 콜백 함수로 전달
 
+1. 자식 컴포넌트에서 부모에게 전달할 상황일 때 발생시킬 이벤트 작성
+
+   ```vue
+   <input 
+         type="text" 
+         v-model="childInputData"
+         @keyup.enter="childInputChange"
+       >
+   ```
+
+2. methods에 발생될 이벤트 작성
+   template에서 발생시키는 이벤트와 동일한 이름으로 작성
+
+3. this.$emit으로 부모에게 전달해줄 이벤트명과 전달 데이터를 전달
+
+   ```vue
+   methods : {
+       childInputChange : function(){
+           console.log("Enter!", this.childInputData)
+           //부모 컴포넌트에게 첫번째 인자는 이벤트 발생, 
+   		//2번째인자부터 넘겨주는 데이터지만
+           //왠만하면 context처럼 하나의 인자로만 넘겨주자
+           this.$emit('child-input-change', this.childInputData)
+   	}
+   }
+   ```
+
+4. 부모 컴포넌트의 template에 작성된 자식 컴포넌트의 태그에 이벤트 받아주기
+   받는 이벤트는 자식 컴포넌트의 emit에서 작성한 이벤트 명을 적어주어야함
+   그 이벤트가 자식으로부터 들어오면 부모 컴포넌트에서 실행시킬 methods함수를 값으로 넣어준다
+
+   ```vue
+   <the-About 
+         @child-input-change="parentGetChange">
+   </the-About>
+   ```
+
+5. 실행된 함수에서 자식이 보내준 데이터 받기
+
+   ```vue
+   methods: {
+       parentGetChange: function(inputData) {
+         console.log('왜불러', inputData)
+   	}
+   }
+   ```
+
+   
 
 ## Vue Router
 
@@ -228,9 +308,107 @@ $ vue add router
 - 기본값으로 해쉬모드를 제공하지만 히스토리 모드가 더 좋다.
 - 히스토리모드는 SSR 방식에서의 url과 같은 형태로 표시해준다.
 
-### main.js
+### router-link
 
-### App.vue
+> <router-link>
+
+```vue
+<router-link to="/">Home</router-link>
+```
+
+- 사용자 네비게이션을 가능하게 하는 컴포넌트
+- 목표 경로는 'to' prop으로 지정됨
+- a태그이지만, 기본 get요청을 제거하고, router-view에 보여줄 컴포넌트를 교체해준다.
+- 보여줄 컴포넌트를 선택할 수 있게 해주는 버튼 같은 역할
+
+#### Named Routes
+
+- 이름을 가지는 라우트
+
+- router/index.js에서 정한 name을 기준으로 가져온다
+
+  ```vue
+  <router-link :to="{name : 'home'}"
+  ```
+
+#### 프로그래밍 방식 네비게이션
+
+- vue인스턴스 내부에서 라우터 인스턴스에 $router로 접근할 수 있음
+- 따라서 다른 url로 이동하려면 this.$router.push로 호출할 수 있다
+
+```vue
+<template>
+	<div>
+        <button @click="moveToHome"> </button>
+    </div>
+</template>
+<script>
+    export default {
+        name : '~',
+        methods : {
+            moveToHome(){
+                //this.$router.push('/')
+                this.$router.push({name : 'home'})
+            }
+        }
+    }
+</script>
+```
+
+#### Dynamic Route Matching
+
+> variable routing
+
+- 동적 인자 전달
+- 동적인자는 :(콜론)으로 시작
+- 해당 dynamic route로 들어온 컴포넌트에서는 
+  this.$route.params로 동적인자를 사용가능하다
+
+```vue
+//index.js
+import LottoView from '../views/LottoView.vue'
+const routes = [
+	{
+		path : '/lotto/:lottoNum',
+		name : 'lotto',
+		component : LottoView,
+	}
+]
+//LottoView.vue
+<template>
+	<h2>
+        {{$route.params.lottoNum}}개 번호 추첨
+    </h2>
+</template>
+<script>
+    ~,
+    methods: {
+        function(){
+            const n = this.$route.params.lottoNum
+        }
+    }
+</script>
+//App.vue
+<template>
+	<router-link to="/lotto/:lottoNum">Home</router-link>
+	<router-link :to="{name : 'lotto', params:{lottoNum:6}}">lotto</router-link>
+</template>
+```
+
+
+
+### router-view
+
+> <router-view>
+
+```vue
+<router-view/>
+```
+
+- 주어진 라우터에 대해 일치하는 컴포넌트를 렌더링하는 컴포넌트
+- 실제 component가 DOM에 부착되어 보이는 자리를 의미
+
+
 
 ### router/index.js
 
@@ -283,15 +461,267 @@ $ vue add router
 $ vue add vuex
 ```
 
-# 5/11일 workshop 참조하기
+
+
+### Todo App
+
+```vue
+//App.vue
+<template>
+  <div id="app">
+    <img alt="Vue logo" src="./assets/logo.png">
+    <!-- 바인딩이 되지 않아서 delete와 같이 methods에 함수화 하지 못한다 -->
+    <h1>Todo List</h1>
+    <h2>All Todos : {{allTodos}}</h2>
+    <h2>Completed Todo : {{completedTodos}} </h2>
+    <h2>Uncompleted Todo : {{uncompletedTodos}} </h2>
+    <todo-form></todo-form>
+    <todo-list></todo-list>
+  </div>
+</template>
+
+<script>
+import TodoList from '@/components/TodoList.vue'
+import TodoForm from '@/components/TodoForm.vue'
+// import {mapGetters} from 'vuex'
+
+export default {
+  name: 'App',
+  components: {
+    TodoList,
+    TodoForm
+  },
+  //getter를 사용해보자
+  //getter를 통해 완료된 todo의 개수를 출력해보자
+  //methods를 통해서는 못쓴다
+  //computed는 된다
+  //getter 자체가 computed와 유사하기 때문에
+  computed : {
+    completedTodos() {
+      return this.$store.getters.completedTodos
+    },
+    uncompletedTodos() {
+      return this.$store.getters.uncompletedTodos
+    },
+    allTodos() {
+      return this.$store.getters.allTodos
+    }
+    
+  },
+  //mapGetters를 이용할 수도 있다
+  // computed : {
+  //   ...mapGetters(['completedTodos'])
+  // }
+}
+</script>
+
+//store/index.js
+<template>
+  <div id="app">
+    <img alt="Vue logo" src="./assets/logo.png">
+    <!-- 바인딩이 되지 않아서 delete와 같이 methods에 함수화 하지 못한다 -->
+    <h1>Todo List</h1>
+    <h2>All Todos : {{allTodos}}</h2>
+    <h2>Completed Todo : {{completedTodos}} </h2>
+    <h2>Uncompleted Todo : {{uncompletedTodos}} </h2>
+    <todo-form></todo-form>
+    <todo-list></todo-list>
+  </div>
+</template>
+
+<script>
+import TodoList from '@/components/TodoList.vue'
+import TodoForm from '@/components/TodoForm.vue'
+// import {mapGetters} from 'vuex'
+
+export default {
+  name: 'App',
+  components: {
+    TodoList,
+    TodoForm
+  },
+  //getter를 사용해보자
+  //getter를 통해 완료된 todo의 개수를 출력해보자
+  //methods를 통해서는 못쓴다
+  //computed는 된다
+  //getter 자체가 computed와 유사하기 때문에
+  computed : {
+    completedTodos() {
+      return this.$store.getters.completedTodos
+    },
+    uncompletedTodos() {
+      return this.$store.getters.uncompletedTodos
+    },
+    allTodos() {
+      return this.$store.getters.allTodos
+    }
+    
+  },
+  //mapGetters를 이용할 수도 있다
+  // computed : {
+  //   ...mapGetters(['completedTodos'])
+  // }
+}
+</script>
+
+//components/TodoList.vue
+<template>
+  <div>
+      <!-- todos의 각 객체들을 하나하나 todolistitem으로 prop해야하니까 -->
+      <!-- 근데 todos는 state에 있으니까 this.$store.state.todos로 불러와야한다 -->
+      <!-- prop명은 todo -->
+      <!-- 근데 todos 불러오는게 너무 길다고 생각되면 => 컴퓨티드로 -->
+      <!-- v-for="todo in $store.state.todos"  -->
+      <todo-list-item
+        v-for="todo in todos" 
+        :key="todo.date"
+        :todo="todo"
+      ></todo-list-item>
+  </div>
+</template>
+
+<script>
+// todolistitem으로 하나의 todo를 todolistitem으로 관리할 예정이니까
+import TodoListItem from './TodoListItem.vue'
+export default {
+    name : 'TodoList',
+    components :{
+        TodoListItem,
+    },
+    //컴퓨티드에서 todos를 불러와서 template에서 줄여주자
+    computed : {
+        todos() {
+            return this.$store.state.todos
+        }
+    }
+}
+</script>
+
+//components/TodoForm.vue
+<template>
+  <div>
+      <input type="text" 
+        v-model.trim="todoTitle" 
+        @keyup.enter="createTodo">
+  </div>
+</template>
+
+<script>
+export default {
+    name : 'TodoForm',
+    data() {
+        return {
+            todoTitle : ''
+        }
+    },
+    methods : {
+        createTodo() {
+            //저장할 model 생성하는 느낌으로
+            const newTodo = {
+                title : this.todoTitle,
+                isCompleted : false,
+                data : new Date().getTime()
+            }
+            //생성했으니 이제 저장할 차례
+            //store의 actions함수 불러오려면
+            //$store를 부르고, dispatch함수로 actions 목록에 원하는
+            //메소드를 첫인자로 가져오고, 전달할 데이터를 두번째 인지로 준다
+            this.$store.dispatch('createTodo', newTodo)
+            //저장했으니 다음을 위해 초기화해주자
+            this.todoTitle = ''
+        }
+    }
+}
+</script>
+
+//components/TodoListItem.vue
+<template>
+  <div>
+      <!-- 이제 업데이트:완료한 todo는 중간줄 긋기 해보자 -->
+      <!-- isCompleted가 true면 줄긋는 css가져오기 -->
+      <span 
+        @click="updateTodo(todo)"
+        :class="{'is-completed' : todo.isCompleted}"
+        >
+        {{todo.title}}
+      </span>
+      <!-- 이제 삭제도 추가해보자 -->
+      <!-- mapActions을 쓰면서 데이터를 methods에서 못넘기니까 -->
+      <!-- 여기서 바로 넘겨준다 -->
+      <!-- 원래는 여기서 함수실행하면 안되지만 -->
+      <!-- 이것만 예외상황 -->
+      <button @click="deleteTodo(todo)"
+      >X</button>
+  </div>
+</template>
+
+<script>
+//바로 index.js의 actions의 메소드를 사용하려면
+import {mapActions} from 'vuex'
+//import veux를 해주면 되는데
+//veux에 mapActions를 사용할 것이다
+//그러므로 축약형 사용가능
+
+export default {
+    name : 'TodoListItem',
+    props :{
+        todo : Object,
+    },
+    // methods : {
+    //     deleteTodo() {
+    //         //todo 하나의 객체를 표현하기 위한 vue 객체임
+    //         //이 객체 todo를 넘겨주면 된다
+    //         this.$store.dispatch('deleteTodo', this.todo)
+    //     }
+    // },
+    //mapActions(['deleteTodo']) === {deleteTodo() {}} 똑같다
+    //결국 mapActions자체가 methods처럼 메소드집단이므로 그냥 :만 써준다
+    //mapActions()의 인자는 배열형태로 들어온다
+    //배열에는 여러 메소드들을 적으면 여러개로 가져온다
+    //mapActions를 쓰면 데이터를 여기서 못넘겨주니까 => template로 이동
+    methods : mapActions(['deleteTodo', 'updateTodo'])
+    //만약 mapActions의 메소드 외에 따로 이 컴포넌트의 메소드를 추가 작성하려면
+    //methods : {
+        //...mapActions(['deleteTodo']),
+        //myMethod(){}
+    //}
+    //이렇게 스프레드로 풀어서 요소 형태로 추가한 다음 작성 가능
+}
+</script>
+
+<style>
+/* 이 컴포넌트의 값들에게만 적용하려면 scoped를 써준다
+    <style scoped>
+ */
+.is-completed {
+    text-decoration: line-through;
+}
+</style>
+```
 
 
 
-### State
+## Local Storage
 
-> state는 곧 data이며 해당 어플리케이션의 핵심이 되는 요소
+> client 컴퓨터에 저장
+
+~~session storage : 탭이 켜져있는 동안만 저장~~
+
+### 접근하기
+
+> localStorage.setItem('todos', data)
 >
-> 중앙에서 관리하는 모든 상태 정보
+> localStorage.getItem('todos')
+
+- 데이터를 저장할때, 문자열로 변환을 안해주면 입력받은 값의 타입만 저장해준다
+
+### 문자열 변환
+
+> JSON.stringify(todos)
+
+### 문자열을 원래 형태로 변환
+
+> JSON.parse(data)
 
 
 
@@ -307,3 +737,36 @@ $ vue add vuex
 $ veu i veux-persistedstate
 ```
 
+#### 사용
+
+```vue
+//index.js
+import createPersistedState from 'veux-persistedstate'
+
+export default new Vuex.Store({
+	plugins : [
+		createPersistedState(),
+	],
+})
+```
+
+
+
+### life-cycle
+
+> 컴포넌트의 주기
+
+- beforeCreate() {} : 컴포넌트가 생성되기 전
+  - 컴포넌트 데이터 접근 불가능
+- created() {} : 컴포넌트가 생성된 직후
+  - dom 접근 불가능
+  - 데이터 접근 가능
+- beforeMount() {} : 상위 컴포넌트에 부착되기 전
+  - dom 접근 불가능
+- mounted() {} : 부착된 후
+  - dom 접근 가능
+- beforeUpdate() {} : 업데이트가 실행되지만 갱신자체는 되기 전
+- updated() {} : 업데이트 이후
+- beforeDestory() {} : mount 상태 해체와 동일, 상위 컴포넌트에서 떨어지기 전
+- destroyed() {} : 탈착 후
+  - dom 접근 불가능
