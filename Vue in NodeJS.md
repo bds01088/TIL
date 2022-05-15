@@ -333,8 +333,8 @@ $ vue add router
 
 #### 프로그래밍 방식 네비게이션
 
-- vue인스턴스 내부에서 라우터 인스턴스에 $router로 접근할 수 있음
-- 따라서 다른 url로 이동하려면 this.$router.push로 호출할 수 있다
+- vue인스턴스 내부에서 라우터 인스턴스에 `$router`로 접근할 수 있음
+- 따라서 다른 url로 이동하려면 this.`$router`.push로 호출할 수 있다
 
 ```vue
 <template>
@@ -362,7 +362,7 @@ $ vue add router
 - 동적 인자 전달
 - 동적인자는 :(콜론)으로 시작
 - 해당 dynamic route로 들어온 컴포넌트에서는 
-  this.$route.params로 동적인자를 사용가능하다
+  this.`$route`.params로 동적인자를 사용가능하다
 
 ```vue
 //index.js
