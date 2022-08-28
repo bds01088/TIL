@@ -1,0 +1,56 @@
+딕셔너리
+키 반환 : dict.keys()
+값 반환 : dict.values()
+둘다 반환 : dict.items()
+키로 값 찾기 : 1. dict.get(key) => 없으면 None => get(key, default)로 없으면 디폴트값 반환가능
+                  2. dict[key] => 없으면 에러
+키가 딕셔너리 안에 있는지 : key in dict
+
+인덱스
+가장 먼저 일치하는 값의 인덱스만 가져옴
+값의 인덱스 찾기 : list.index(값)
+범위 인덱스 내의 값 찾기 : list.index(value, start, end)
+
+isalpha() : 문자열이면 True
+isnum() : 숫자면 True
+isdigit() : 이거도 isnum이랑 비슷
+
+eval('문자열') : 파이썬 코드에서 실행가능한 문자열을 실제로 실행해줌
+ex) eval('round(4.9)') -> 5
+
+from itertools import combination
+=> combinations(list, num) 중복 허용X
+from itertools import combination_with_replacement
+=> combinations_with_replacement(list, num) 원소 중복 가능
+from itertools import permutation
+=> permutation(list, num) 중복 허용O
+from itertools import prodcut
+=> product(list, repeat=num) 원소 중복 가능
+
+
+import copy
+new_value = copy.deepcopy(value)
+
+import heapq
+heap = []
+heapq.heappush(heap, value)
+heapq.heapify(list)
+heapq.heappop(heap)
+최대힙 : heapq.heappush(heap, (-num, num)
+
+lambda sort
+list.sort(key=lambda x: (x[1],x[0])
+
+ord() : char -> int
+chr() : int -> char
+
+from collections import deque
+from collections impot Counter
+=> 리스트에서 내부 원소가 몇번 등장하는지 알려줌
+
+f-string
+print(f'#-{value}')
+
+import sys
+input = sys.stdin.readline
+input().strip().split()

@@ -15,6 +15,19 @@ $ npm install -g @vue/cli
 
 
 
+### 모듈이 존재하지 않을 경우
+
+```bash
+npm install
+```
+
+https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=on21life&logNo=221361358946
+
+- 백엔드에서 install requirements와 같은 느낌이다
+- 모듈을 각각 설치한게 다를 수도 있기 때문에 package.json에 기록된 것을 새로 설치하는 명령어이다
+
+
+
 ### 프로젝트 생성
 
 > git-bash가 아닌 vscode terminal로 진행
